@@ -1,5 +1,6 @@
 package com.dncoyote.expensetracker.util;
 
+import com.dncoyote.expensetracker.model.Expense;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -94,11 +96,11 @@ public class GoogleApiUtil {
     // }
     // }
 
-    public Map<Object, Object> getDataFromGoogleSheet() throws IOException, GeneralSecurityException {
+    public List<Expense> getDataFromGoogleSheet() throws IOException, GeneralSecurityException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         final String spreadsheetId = "1iY4Q0DLl-UofnPU_936Rz_lhef_egjhskfI0uH5nvgs";
-        final String range = "Sheet1!A:B";
+        final String range = "August_2023!B10:C";
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
@@ -107,16 +109,19 @@ public class GoogleApiUtil {
                 .execute();
         List<List<Object>> values = response.getValues();
         Map<Object, Object> storeDataFromGoogleSheet = new HashMap<>();
+        List<Expense> expenses = new ArrayList<>();
         if (values == null || values.isEmpty()) {
             System.out.println("No data found.");
         } else {
-            System.out.println("Name, Major");
+            System.out.println("Type, Amount");
+            int i = 0;
             for (List row : values) {
                 // Print columns A and E, which correspond to indices 0 and 4.
-                System.out.printf("%s, %s\n", row.get(0), row.get(1));
-                storeDataFromGoogleSheet.put(row.get(0), row.get(1));
+                System.out.printf("%s, %s, %s\n", ++i, row.get(0), row.get(1));
+                // storeDataFromGoogleSheet.put(row.get(0), row.get(1));
+                expenses.add(new Expense(row.get(0), row.get(1)));
             }
         }
-        return storeDataFromGoogleSheet;
+        return expenses;
     }
 }
