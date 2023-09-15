@@ -100,7 +100,7 @@ public class GoogleApiUtil {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         final String spreadsheetId = "1iY4Q0DLl-UofnPU_936Rz_lhef_egjhskfI0uH5nvgs";
-        final String range = "August_2023!B10:C";
+        final String range = "August_2023!B10:F";
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
@@ -117,9 +117,12 @@ public class GoogleApiUtil {
             int i = 0;
             for (List row : values) {
                 // Print columns A and E, which correspond to indices 0 and 4.
-                System.out.printf("%s, %s, %s\n", ++i, row.get(0), row.get(1));
+                System.out.printf("%s, %s, %s, %s, %s\n", ++i, row.get(0), row.get(1), row.get(2), row.get(3),
+                        row.get(4));
                 // storeDataFromGoogleSheet.put(row.get(0), row.get(1));
-                expenses.add(new Expense(row.get(0), row.get(1)));
+                expenses.add(new Expense(row.get(0).toString(), row.get(1).toString(),
+                        Double.parseDouble(row.get(2).toString()),
+                        row.get(3).toString(), row.get(4).toString()));
             }
         }
         return expenses;
