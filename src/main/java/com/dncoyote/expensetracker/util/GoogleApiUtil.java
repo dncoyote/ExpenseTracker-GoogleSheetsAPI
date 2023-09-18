@@ -1,5 +1,6 @@
 package com.dncoyote.expensetracker.util;
 
+import com.dncoyote.expensetracker.DTO.ExpenseRequestDto;
 import com.dncoyote.expensetracker.model.Expense;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
@@ -19,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,6 +72,9 @@ public class GoogleApiUtil {
     /**
      * Prints the names and majors of students in a sample spreadsheet:
      * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
+     * 
+     * @throws ParseException
+     * @throws NumberFormatException
      */
     // public static void main(String... args) throws IOException,
     // GeneralSecurityException {
@@ -96,11 +102,19 @@ public class GoogleApiUtil {
     // }
     // }
 
-    public List<Expense> getDataFromGoogleSheet() throws IOException, GeneralSecurityException {
+    public List<Expense> getDataFromGoogleSheet(ExpenseRequestDto reqDto)
+            throws IOException, GeneralSecurityException, NumberFormatException, ParseException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         final String spreadsheetId = "1iY4Q0DLl-UofnPU_936Rz_lhef_egjhskfI0uH5nvgs";
-        final String range = "August_2023!B10:F";
+
+        StringBuilder reqStringBuilder = new StringBuilder();
+        reqStringBuilder.append(reqDto.getMonth());
+        reqStringBuilder.append("_");
+        reqStringBuilder.append(reqDto.getYear());
+        reqStringBuilder.append("!B10:F");
+
+        final String range = reqStringBuilder.toString();
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
@@ -108,6 +122,7 @@ public class GoogleApiUtil {
                 .get(spreadsheetId, range)
                 .execute();
         List<List<Object>> values = response.getValues();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yyyy");
         Map<Object, Object> storeDataFromGoogleSheet = new HashMap<>();
         List<Expense> expenses = new ArrayList<>();
         if (values == null || values.isEmpty()) {
@@ -122,7 +137,7 @@ public class GoogleApiUtil {
                 // storeDataFromGoogleSheet.put(row.get(0), row.get(1));
                 expenses.add(new Expense(row.get(0).toString(), row.get(1).toString(),
                         Double.parseDouble(row.get(2).toString()),
-                        row.get(3).toString(), row.get(4).toString()));
+                        row.get(3).toString(), dateFormat.parse(row.get(4).toString())));
             }
         }
         return expenses;

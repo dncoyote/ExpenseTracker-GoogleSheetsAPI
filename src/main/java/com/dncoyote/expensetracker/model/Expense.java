@@ -1,5 +1,7 @@
 package com.dncoyote.expensetracker.model;
 
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,6 +17,6 @@ public class Expense {
     private String type;
     private double amount;
     private String description;
-    private String date;
+    private Date date;
 
 }
