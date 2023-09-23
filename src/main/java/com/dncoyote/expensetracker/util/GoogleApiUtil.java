@@ -15,6 +15,9 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
+
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +33,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class GoogleApiUtil {
     private static final String APPLICATION_NAME = "Google Sheets API Java Quickstart";
@@ -69,58 +73,28 @@ public class GoogleApiUtil {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    /**
-     * Prints the names and majors of students in a sample spreadsheet:
-     * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-     * 
-     * @throws ParseException
-     * @throws NumberFormatException
-     */
-    // public static void main(String... args) throws IOException,
-    // GeneralSecurityException {
-    // // Build a new authorized API client service.
-    // final NetHttpTransport HTTP_TRANSPORT =
-    // GoogleNetHttpTransport.newTrustedTransport();
-    // final String spreadsheetId = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms";
-    // final String range = "Class Data!A2:E";
-    // Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY,
-    // getCredentials(HTTP_TRANSPORT))
-    // .setApplicationName(APPLICATION_NAME)
-    // .build();
-    // ValueRange response = service.spreadsheets().values()
-    // .get(spreadsheetId, range)
-    // .execute();
-    // List<List<Object>> values = response.getValues();
-    // if (values == null || values.isEmpty()) {
-    // System.out.println("No data found.");
-    // } else {
-    // System.out.println("Name, Major");
-    // for (List row : values) {
-    // // Print columns A and E, which correspond to indices 0 and 4.
-    // System.out.printf("%s, %s\n", row.get(0), row.get(4));
-    // }
-    // }
-    // }
-
     public List<Expense> getDataFromGoogleSheet(ExpenseRequestDto reqDto)
             throws IOException, GeneralSecurityException, NumberFormatException, ParseException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        final String spreadsheetId = "1iY4Q0DLl-UofnPU_936Rz_lhef_egjhskfI0uH5nvgs";
+        // final String spreadsheetId = SPREADSHEET_ID;
+        final String spreadSheetId = "1iY4Q0DLl-UofnPU_936Rz_lhef_egjhskfI0uH5nvgs";
 
         StringBuilder reqStringBuilder = new StringBuilder();
         reqStringBuilder.append(reqDto.getMonth());
         reqStringBuilder.append("_");
         reqStringBuilder.append(reqDto.getYear());
         reqStringBuilder.append("!B10:F");
+        // reqStringBuilder.append(TEMPLATE_RANGE);
 
         final String range = reqStringBuilder.toString();
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
         ValueRange response = service.spreadsheets().values()
-                .get(spreadsheetId, range)
+                .get(spreadSheetId, range)
                 .execute();
+        log.info("Fetching data from : " + spreadSheetId + range);
         List<List<Object>> values = response.getValues();
         SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yyyy");
         Map<Object, Object> storeDataFromGoogleSheet = new HashMap<>();

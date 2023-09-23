@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.dncoyote.expensetracker.DTO.ExpenseRequestDto;
+import com.dncoyote.expensetracker.common.ExpenseTrackerException;
 import com.dncoyote.expensetracker.model.Expense;
 import com.dncoyote.expensetracker.util.GoogleApiUtil;
 
@@ -20,7 +21,11 @@ public class GoogleApiService {
 
     public List<Expense> readDataFromGoogleSheet(ExpenseRequestDto reqDto)
             throws GeneralSecurityException, IOException, NumberFormatException, ParseException {
-        return googleApiUtil.getDataFromGoogleSheet(reqDto);
+        try {
+            return googleApiUtil.getDataFromGoogleSheet(reqDto);
+        } catch (IOException | GeneralSecurityException | NumberFormatException | ParseException e) {
+            throw new ExpenseTrackerException("Error while fetching data from Google Sheet.", e);
+        }
     }
 
 }
