@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Expense {
+public class MonthlyStatement {
 
     private String category;
     private String type;

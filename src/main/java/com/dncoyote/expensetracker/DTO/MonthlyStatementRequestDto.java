@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ExpenseRequestDto {
+public class MonthlyStatementRequestDto {
     private String month;
     private String year;
 }

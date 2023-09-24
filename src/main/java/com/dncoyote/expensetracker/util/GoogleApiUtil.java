@@ -1,7 +1,7 @@
 package com.dncoyote.expensetracker.util;
 
-import com.dncoyote.expensetracker.DTO.ExpenseRequestDto;
-import com.dncoyote.expensetracker.model.Expense;
+import com.dncoyote.expensetracker.DTO.MonthlyStatementRequestDto;
+import com.dncoyote.expensetracker.model.MonthlyStatement;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -73,7 +73,7 @@ public class GoogleApiUtil {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    public List<Expense> getDataFromGoogleSheet(ExpenseRequestDto reqDto)
+    public List<MonthlyStatement> getDataFromGoogleSheet(MonthlyStatementRequestDto reqDto)
             throws IOException, GeneralSecurityException, NumberFormatException, ParseException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
@@ -98,7 +98,7 @@ public class GoogleApiUtil {
         List<List<Object>> values = response.getValues();
         SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yyyy");
         Map<Object, Object> storeDataFromGoogleSheet = new HashMap<>();
-        List<Expense> expenses = new ArrayList<>();
+        List<MonthlyStatement> expenses = new ArrayList<>();
         if (values == null || values.isEmpty()) {
             System.out.println("No data found.");
         } else {
@@ -109,7 +109,7 @@ public class GoogleApiUtil {
                 System.out.printf("%s, %s, %s, %s, %s\n", ++i, row.get(0), row.get(1), row.get(2), row.get(3),
                         row.get(4));
                 // storeDataFromGoogleSheet.put(row.get(0), row.get(1));
-                expenses.add(new Expense(row.get(0).toString(), row.get(1).toString(),
+                expenses.add(new MonthlyStatement(row.get(0).toString(), row.get(1).toString(),
                         Double.parseDouble(row.get(2).toString()),
                         row.get(3).toString(), dateFormat.parse(row.get(4).toString())));
             }
