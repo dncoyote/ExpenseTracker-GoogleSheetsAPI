@@ -12,4 +12,6 @@ import lombok.Setter;
 public class MonthlyStatementRequestDto {
     private String month;
     private String year;
+    private String sortBy;
+    private String sortOrder;
 }

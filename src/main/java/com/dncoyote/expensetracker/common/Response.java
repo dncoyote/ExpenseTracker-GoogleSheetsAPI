@@ -16,9 +16,11 @@ public class Response<Data> {
     private Long timestamp = new Date().getTime();
     private String message;
     private Data data;
+    private int statusCode;
 
-    public Response(String message, Data data) {
+    public Response(String message, Data data, int statusCode) {
         this.message = message;
         this.data = data;
+        this.statusCode = statusCode;
     }
 }
