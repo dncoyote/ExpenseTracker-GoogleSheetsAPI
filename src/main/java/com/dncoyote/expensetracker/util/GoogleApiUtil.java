@@ -1,6 +1,8 @@
 package com.dncoyote.expensetracker.util;
 
-import com.dncoyote.expensetracker.model.Expense;
+import com.dncoyote.expensetracker.DTO.MonthlyStatementRequestDto;
+import com.dncoyote.expensetracker.common.ExpenseTrackerException;
+import com.dncoyote.expensetracker.model.MonthlyStatement;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -14,11 +16,16 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
+
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,6 +34,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
 public class GoogleApiUtil {
     private static final String APPLICATION_NAME = "Google Sheets API Java Quickstart";
@@ -66,65 +74,61 @@ public class GoogleApiUtil {
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    /**
-     * Prints the names and majors of students in a sample spreadsheet:
-     * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-     */
-    // public static void main(String... args) throws IOException,
-    // GeneralSecurityException {
-    // // Build a new authorized API client service.
-    // final NetHttpTransport HTTP_TRANSPORT =
-    // GoogleNetHttpTransport.newTrustedTransport();
-    // final String spreadsheetId = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms";
-    // final String range = "Class Data!A2:E";
-    // Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY,
-    // getCredentials(HTTP_TRANSPORT))
-    // .setApplicationName(APPLICATION_NAME)
-    // .build();
-    // ValueRange response = service.spreadsheets().values()
-    // .get(spreadsheetId, range)
-    // .execute();
-    // List<List<Object>> values = response.getValues();
-    // if (values == null || values.isEmpty()) {
-    // System.out.println("No data found.");
-    // } else {
-    // System.out.println("Name, Major");
-    // for (List row : values) {
-    // // Print columns A and E, which correspond to indices 0 and 4.
-    // System.out.printf("%s, %s\n", row.get(0), row.get(4));
-    // }
-    // }
-    // }
-
-    public List<Expense> getDataFromGoogleSheet() throws IOException, GeneralSecurityException {
+    public List<MonthlyStatement> getDataFromGoogleSheet(MonthlyStatementRequestDto reqDto)
+            throws IOException, GeneralSecurityException, NumberFormatException, ParseException {
         // Build a new authorized API client service.
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        final String spreadsheetId = "1iY4Q0DLl-UofnPU_936Rz_lhef_egjhskfI0uH5nvgs";
-        final String range = "August_2023!B10:F";
+        // final String spreadsheetId = SPREADSHEET_ID;
+        final String spreadSheetId = "1iY4Q0DLl-UofnPU_936Rz_lhef_egjhskfI0uH5nvgs";
+
+        StringBuilder reqStringBuilder = new StringBuilder();
+        reqStringBuilder.append(reqDto.getMonth());
+        reqStringBuilder.append("_");
+        reqStringBuilder.append(reqDto.getYear());
+        reqStringBuilder.append("!B10:F");
+        // reqStringBuilder.append(TEMPLATE_RANGE);
+
+        final String range = reqStringBuilder.toString();
         Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
                 .setApplicationName(APPLICATION_NAME)
                 .build();
-        ValueRange response = service.spreadsheets().values()
-                .get(spreadsheetId, range)
-                .execute();
+        ValueRange response = null;
+        List<MonthlyStatement> expenses = new ArrayList<>();
+        try {
+            response = service.spreadsheets().values()
+                    .get(spreadSheetId, range)
+                    .execute();
+        } catch (IOException e) {
+            // Log the error message or rethrow the exception for further analysis
+            e.printStackTrace();
+            // Handle the exception as needed
+            throw e;
+        }
+        log.info("Fetching data from : " + spreadSheetId + range);
         List<List<Object>> values = response.getValues();
-        Map<Object, Object> storeDataFromGoogleSheet = new HashMap<>();
-        List<Expense> expenses = new ArrayList<>();
-        if (values == null || values.isEmpty()) {
-            System.out.println("No data found.");
+        if (response == null) {
+            throw new ExpenseTrackerException("Google Sheets API returned null response.");
         } else {
-            System.out.println("Type, Amount");
-            int i = 0;
-            for (List row : values) {
-                // Print columns A and E, which correspond to indices 0 and 4.
-                System.out.printf("%s, %s, %s, %s, %s\n", ++i, row.get(0), row.get(1), row.get(2), row.get(3),
-                        row.get(4));
-                // storeDataFromGoogleSheet.put(row.get(0), row.get(1));
-                expenses.add(new Expense(row.get(0).toString(), row.get(1).toString(),
-                        Double.parseDouble(row.get(2).toString()),
-                        row.get(3).toString(), row.get(4).toString()));
+            SimpleDateFormat dateFormat = new SimpleDateFormat("M/d/yyyy");
+            Map<Object, Object> storeDataFromGoogleSheet = new HashMap<>();
+
+            if (values == null || values.isEmpty()) {
+                System.out.println("No data found.");
+            } else {
+                System.out.println("Type, Amount");
+                int i = 0;
+                for (List row : values) {
+                    // Print columns A and E, which correspond to indices 0 and 4.
+                    System.out.printf("%s, %s, %s, %s, %s\n", ++i, row.get(0), row.get(1), row.get(2), row.get(3),
+                            row.get(4));
+                    // storeDataFromGoogleSheet.put(row.get(0), row.get(1));
+                    expenses.add(new MonthlyStatement(row.get(0).toString(), row.get(1).toString(),
+                            Double.parseDouble(row.get(2).toString()),
+                            row.get(3).toString(), dateFormat.parse(row.get(4).toString())));
+                }
             }
         }
+
         return expenses;
     }
 }
